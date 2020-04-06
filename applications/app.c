@@ -54,6 +54,7 @@ void app_set_configuration(app_configuration *conf) {
 	app_nunchuk_stop();
 	app_balance_stop();
 	app_lights_stop();
+	app_pedelec_stop();
 
 	if (!conf_general_permanent_nrf_found) {
 		nrf_driver_stop();
@@ -73,6 +74,7 @@ void app_set_configuration(app_configuration *conf) {
 	app_balance_configure(&appconf.app_balance_conf, &appconf.imu_conf);
 
 	app_lights_start();
+	app_pedelec_start(); // TODO: Incorporate into app_to_use
 
 	switch (appconf.app_to_use) {
 	case APP_PPM:

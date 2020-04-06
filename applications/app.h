@@ -72,6 +72,9 @@ float app_balance_get_adc2(void);
 void app_lights_start(void);
 void app_lights_stop(void);
 
+void app_pedelec_start(void);
+void app_pedelec_stop(void);
+
 // Custom apps
 void app_custom_start(void);
 void app_custom_stop(void);
