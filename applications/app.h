@@ -69,6 +69,9 @@ uint16_t app_balance_get_switch_state(void);
 float app_balance_get_adc1(void);
 float app_balance_get_adc2(void);
 
+void app_lights_start(void);
+void app_lights_stop(void);
+
 // Custom apps
 void app_custom_start(void);
 void app_custom_stop(void);
