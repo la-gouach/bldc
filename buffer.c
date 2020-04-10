@@ -112,6 +112,12 @@ void buffer_append_float32_auto(uint8_t* buffer, float number, int32_t *index) {
 	buffer_append_uint32(buffer, res, index);
 }
 
+uint8_t buffer_get_uint8(const uint8_t *buffer, int32_t *index) {
+	uint8_t res = ((uint8_t) buffer[*index + 1]);
+	*index += 1;
+	return res;
+}
+
 int16_t buffer_get_int16(const uint8_t *buffer, int32_t *index) {
 	int16_t res =	((uint16_t) buffer[*index]) << 8 |
 					((uint16_t) buffer[*index + 1]);

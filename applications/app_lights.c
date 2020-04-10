@@ -103,22 +103,22 @@ static THD_FUNCTION(lights_thread, arg) {
 	}
 }
 
+void app_lights_set_state(bool state) {
+	commands_printf("Turning the lights %s\n", state ? "ON" : "OFF");
+	lights_on = state;
+}
+
 // Callback function for the terminal command with arguments.
 static void light_command(int argc, const char **argv) {
 	if (argc == 2) {
 		int d = -1;
 		sscanf(argv[1], "%d", &d);
 
-    if (d == 0) {
-      commands_printf("Turning the lights OFF\n");
-      lights_on = false;
-    }
-    else if (d == 1) {
-      commands_printf("Turning the lights ON\n");
-      lights_on = true;
-    }
-    else {
+
+		if (d != 0 && d != 1) {
       commands_printf("Invalid lights values. Expected 0 or 1\n");
-    }
+		} else {
+			app_lights_set_state((bool)d);
+		}
   }
 }

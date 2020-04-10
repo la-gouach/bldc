@@ -71,6 +71,7 @@ float app_balance_get_adc2(void);
 
 void app_lights_start(void);
 void app_lights_stop(void);
+void app_lights_set_state(bool);
 
 void app_pedelec_start(void);
 void app_pedelec_stop(void);

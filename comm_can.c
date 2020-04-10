@@ -827,10 +827,10 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 		CANRxFrame *rxmsg_tmp;
 		while ((rxmsg_tmp = comm_can_get_rx_frame()) != 0) {
 			CANRxFrame rxmsg = *rxmsg_tmp;
-
 			if (rxmsg.IDE == CAN_IDE_EXT) {
 				uint8_t id = rxmsg.EID & 0xFF;
 				CAN_PACKET_ID cmd = rxmsg.EID >> 8;
+
 
 				if (id == 255 || id == app_get_configuration()->controller_id) {
 					switch (cmd) {
@@ -1057,6 +1057,11 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 								encoder_ts5700n8501_get_raw_status(), 8);
 					} break;
 
+					case CAN_PACKET_SET_LIGHTS:
+						ind = 0;
+						bool lights_state = buffer_get_uint8(rxmsg.data8, &ind);
+						app_lights_set_state(lights_state);
+					break;
 					default:
 						break;
 					}
@@ -1135,7 +1140,6 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 						}
 					}
 					break;
-
 				default:
 					break;
 				}
