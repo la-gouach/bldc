@@ -191,7 +191,7 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	tachometer = 0;
 	tachometer_abs = 0;
 	tachometer_for_direction = 0;
-	state = MC_STATE_OFF;
+	mcpwm_set_state(MC_STATE_OFF, false);
 	control_mode = CONTROL_MODE_NONE;
 	last_current_sample = 0.0;
 	last_current_sample_filtered = 0.0;
@@ -675,13 +675,13 @@ void mcpwm_set_brake_current(float current) {
 		// so that it can be ramped down before the full brake is applied.
 		if (conf->motor_type == MOTOR_TYPE_DC) {
 			if (fabsf(dutycycle_now) > 0.1) {
-				state = MC_STATE_RUNNING;
+				mcpwm_set_state(MC_STATE_RUNNING, false);
 			} else {
 				full_brake_ll();
 			}
 		} else {
 			if (fabsf(rpm_now) > conf->l_max_erpm_fbrake) {
-				state = MC_STATE_RUNNING;
+				mcpwm_set_state(MC_STATE_RUNNING, false);
 			} else {
 				full_brake_ll();
 			}
@@ -735,6 +735,10 @@ float mcpwm_get_rpm(void) {
 
 mc_state mcpwm_get_state(void) {
 	return state;
+}
+void mcpwm_set_state(mc_state newState, bool force) {
+	if (!force && state == MC_STATE_LOCKED_OFF) return;
+	state = newState;
 }
 
 /**
@@ -902,7 +906,7 @@ void mcpwm_stop_pwm(void) {
 }
 
 static void stop_pwm_ll(void) {
-	state = MC_STATE_OFF;
+	mcpwm_set_state(MC_STATE_OFF, false);
 	ignore_iterations = MCPWM_CMD_STOP_TIME;
 	stop_pwm_hw();
 }
@@ -930,7 +934,7 @@ static void stop_pwm_hw(void) {
 }
 
 static void full_brake_ll(void) {
-	state = MC_STATE_FULL_BRAKE;
+	mcpwm_set_state(MC_STATE_FULL_BRAKE, false);
 	ignore_iterations = MCPWM_CMD_STOP_TIME;
 	full_brake_hw();
 }
@@ -991,13 +995,13 @@ static void set_duty_cycle_hl(float dutyCycle) {
 			// so that it can be ramped down before the full brake is applied.
 			if (conf->motor_type == MOTOR_TYPE_DC) {
 				if (fabsf(dutycycle_now) > 0.1) {
-					state = MC_STATE_RUNNING;
+					mcpwm_set_state(MC_STATE_RUNNING, false);
 				} else {
 					full_brake_ll();
 				}
 			} else {
 				if (fabsf(rpm_now) > conf->l_max_erpm_fbrake) {
-					state = MC_STATE_RUNNING;
+					mcpwm_set_state(MC_STATE_RUNNING, false);
 				} else {
 					full_brake_ll();
 				}
@@ -1066,28 +1070,28 @@ static void set_duty_cycle_ll(float dutyCycle) {
 	set_duty_cycle_hw(dutyCycle);
 
 	if (conf->motor_type == MOTOR_TYPE_DC) {
-		state = MC_STATE_RUNNING;
+		mcpwm_set_state(MC_STATE_RUNNING, false);
 		set_next_comm_step(comm_step);
 		commutate(1);
 	} else {
 		if (sensorless_now) {
 			if (state != MC_STATE_RUNNING) {
 				if (state == MC_STATE_OFF) {
-					state = MC_STATE_RUNNING;
+					mcpwm_set_state(MC_STATE_RUNNING, false);
 
 					if (fabsf(rpm_now) < conf->sl_min_erpm) {
 						commutate(1);
 					}
 				} else if (state == MC_STATE_FULL_BRAKE) {
 					if (fabsf(rpm_now) < conf->sl_min_erpm && mcpwm_get_tot_current_filtered() < conf->sl_max_fullbreak_current_dir_change) {
-						state = MC_STATE_RUNNING;
+						mcpwm_set_state(MC_STATE_RUNNING, false);
 						commutate(1);
 					}
 				}
 			}
 		} else {
 			if (state != MC_STATE_RUNNING) {
-				state = MC_STATE_RUNNING;
+				mcpwm_set_state(MC_STATE_RUNNING, false);
 				comm_step = mcpwm_read_hall_phase();
 				set_next_comm_step(comm_step);
 				commutate(1);
@@ -2132,7 +2136,7 @@ void mcpwm_set_detect(void) {
 		mcpwm_detect_avg_samples[i] = 0;
 	}
 
-	state = MC_STATE_DETECTING;
+	mcpwm_set_state(MC_STATE_DETECTING, false);
 }
 
 float mcpwm_get_detect_pos(void) {

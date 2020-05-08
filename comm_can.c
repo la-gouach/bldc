@@ -1062,6 +1062,20 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 						bool lights_state = buffer_get_uint8(rxmsg.data8, &ind);
 						app_lights_set_state(lights_state);
 					break;
+
+					case CAN_PACKET_MOTOR_LOCK:
+						ind = 0;
+						bool motor_lock = buffer_get_uint8(rxmsg.data8, &ind);
+						mc_state current_state = mc_interface_get_state();
+						if (motor_lock) {
+							commands_printf("Locking the motor\n");
+							mc_interface_set_state(MC_STATE_LOCKED_OFF, true);
+						} else if (current_state == MC_STATE_LOCKED_OFF) {
+							commands_printf("Unlocking the motor\n");
+							mc_interface_set_state(MC_STATE_OFF, true);
+						}
+					break;
+
 					default:
 						break;
 					}

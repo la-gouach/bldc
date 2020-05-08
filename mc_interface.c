@@ -445,6 +445,22 @@ mc_state mc_interface_get_state(void) {
 	return ret;
 }
 
+void mc_interface_set_state(mc_state newState, bool force) {
+	switch (m_conf.motor_type) {
+	case MOTOR_TYPE_BLDC:
+	case MOTOR_TYPE_DC:
+		mcpwm_set_state(newState, force);
+		break;
+
+	case MOTOR_TYPE_FOC:
+		mcpwm_foc_set_state(newState, force);
+		break;
+
+	default:
+		break;
+	}
+}
+
 void mc_interface_set_duty(float dutyCycle) {
 	if (fabsf(dutyCycle) > 0.001) {
 		SHUTDOWN_RESET();

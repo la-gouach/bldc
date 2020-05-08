@@ -30,6 +30,7 @@ typedef enum {
    MC_STATE_DETECTING,
    MC_STATE_RUNNING,
    MC_STATE_FULL_BRAKE,
+	 MC_STATE_LOCKED_OFF
 } mc_state;
 
 typedef enum {
@@ -795,6 +796,7 @@ typedef enum {
 	CAN_PACKET_STATUS_5,
 	CAN_PACKET_POLL_TS5700N8501_STATUS,
 	CAN_PACKET_SET_LIGHTS,
+	CAN_PACKET_MOTOR_LOCK,
 } CAN_PACKET_ID;
 
 // Logged fault data

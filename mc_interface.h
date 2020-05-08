@@ -34,6 +34,7 @@ void mc_interface_lock_override_once(void);
 mc_fault_code mc_interface_get_fault(void);
 const char* mc_interface_fault_to_string(mc_fault_code fault);
 mc_state mc_interface_get_state(void);
+void mc_interface_set_state(mc_state newState, bool force);
 void mc_interface_set_duty(float dutyCycle);
 void mc_interface_set_duty_noramp(float dutyCycle);
 void mc_interface_set_pid_speed(float rpm);
@@ -98,6 +99,5 @@ extern volatile int ADC_curr_norm_value[];
 #ifndef HW_DEAD_TIME_NSEC
 #define HW_DEAD_TIME_NSEC				360.0	// Dead time
 #endif
-
 
 #endif /* MC_INTERFACE_H_ */

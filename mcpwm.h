@@ -43,6 +43,7 @@ float mcpwm_get_duty_cycle_now(void);
 float mcpwm_get_switching_frequency_now(void);
 float mcpwm_get_rpm(void);
 mc_state mcpwm_get_state(void);
+void mcpwm_set_state(mc_state newState, bool force);
 float mcpwm_get_kv(void);
 float mcpwm_get_kv_filtered(void);
 int mcpwm_get_tachometer_value(bool reset);

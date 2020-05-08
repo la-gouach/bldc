@@ -30,6 +30,7 @@ void mcpwm_foc_deinit(void);
 bool mcpwm_foc_init_done(void);
 void mcpwm_foc_set_configuration(volatile mc_configuration *configuration);
 mc_state mcpwm_foc_get_state(void);
+void mcpwm_foc_set_state(mc_state newState, bool force);
 bool mcpwm_foc_is_dccal_done(void);
 void mcpwm_foc_stop_pwm(void);
 void mcpwm_foc_set_duty(float dutyCycle);

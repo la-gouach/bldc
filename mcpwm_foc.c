@@ -260,7 +260,7 @@ void mcpwm_foc_init(volatile mc_configuration *configuration) {
 	m_conf = configuration;
 
 	// Initialize variables
-	m_state = MC_STATE_OFF;
+	mcpwm_foc_set_state(MC_STATE_OFF, false);
 	m_control_mode = CONTROL_MODE_NONE;
 	m_curr_unbalance = 0.0;
 	m_curr_samples = 0;
@@ -550,14 +550,14 @@ void mcpwm_foc_set_configuration(volatile mc_configuration *configuration) {
 	uint32_t top = SYSTEM_CORE_CLOCK / (int)configuration->foc_f_sw;
 	if (TIM1->ARR != top) {
 		m_control_mode = CONTROL_MODE_NONE;
-		m_state = MC_STATE_OFF;
+		mcpwm_foc_set_state(MC_STATE_OFF, false);
 		stop_pwm_hw();
 		TIMER_UPDATE_SAMP_TOP(MCPWM_FOC_CURRENT_SAMP_OFFSET, top);
 	}
 
 	if (((1 << m_conf->foc_hfi_samples) * 8) != m_hfi.samples) {
 		m_control_mode = CONTROL_MODE_NONE;
-		m_state = MC_STATE_OFF;
+		mcpwm_foc_set_state(MC_STATE_OFF, false);
 		stop_pwm_hw();
 		update_hfi_samples(configuration->foc_hfi_samples);
 	}
@@ -566,6 +566,11 @@ void mcpwm_foc_set_configuration(volatile mc_configuration *configuration) {
 mc_state mcpwm_foc_get_state(void) {
 	return m_state;
 }
+void mcpwm_foc_set_state(mc_state newState, bool force) {
+	if (!force && m_state == MC_STATE_LOCKED_OFF) return;
+	m_state = newState;
+}
+
 
 bool mcpwm_foc_is_dccal_done(void) {
 	return m_dccal_done;
@@ -590,7 +595,7 @@ void mcpwm_foc_set_duty(float dutyCycle) {
 	m_duty_cycle_set = dutyCycle;
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -621,7 +626,7 @@ void mcpwm_foc_set_pid_speed(float rpm) {
 	m_speed_pid_set_rpm = rpm;
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -637,7 +642,7 @@ void mcpwm_foc_set_pid_pos(float pos) {
 	m_pos_pid_set = pos;
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -652,7 +657,7 @@ void mcpwm_foc_set_pid_pos(float pos) {
 void mcpwm_foc_set_current(float current) {
 	if (fabsf(current) < m_conf->cc_min_current) {
 		m_control_mode = CONTROL_MODE_NONE;
-		m_state = MC_STATE_OFF;
+		mcpwm_foc_set_state(MC_STATE_OFF, false);
 		stop_pwm_hw();
 		return;
 	}
@@ -661,7 +666,7 @@ void mcpwm_foc_set_current(float current) {
 	m_iq_set = current;
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -675,7 +680,7 @@ void mcpwm_foc_set_current(float current) {
 void mcpwm_foc_set_brake_current(float current) {
 	if (fabsf(current) < m_conf->cc_min_current) {
 		m_control_mode = CONTROL_MODE_NONE;
-		m_state = MC_STATE_OFF;
+		mcpwm_foc_set_state(MC_STATE_OFF, false);
 		stop_pwm_hw();
 		return;
 	}
@@ -684,7 +689,7 @@ void mcpwm_foc_set_brake_current(float current) {
 	m_iq_set = current;
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -698,7 +703,7 @@ void mcpwm_foc_set_brake_current(float current) {
 void mcpwm_foc_set_handbrake(float current) {
 	if (fabsf(current) < m_conf->cc_min_current) {
 		m_control_mode = CONTROL_MODE_NONE;
-		m_state = MC_STATE_OFF;
+		mcpwm_foc_set_state(MC_STATE_OFF, false);
 		stop_pwm_hw();
 		return;
 	}
@@ -707,7 +712,7 @@ void mcpwm_foc_set_handbrake(float current) {
 	m_iq_set = current;
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -723,7 +728,7 @@ void mcpwm_foc_set_handbrake(float current) {
 void mcpwm_foc_set_openloop(float current, float rpm) {
 	if (fabsf(current) < m_conf->cc_min_current) {
 		m_control_mode = CONTROL_MODE_NONE;
-		m_state = MC_STATE_OFF;
+		mcpwm_foc_set_state(MC_STATE_OFF, false);
 		stop_pwm_hw();
 		return;
 	}
@@ -736,7 +741,7 @@ void mcpwm_foc_set_openloop(float current, float rpm) {
 	m_openloop_speed = rpm * ((2.0 * M_PI) / 60.0);
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -752,7 +757,7 @@ void mcpwm_foc_set_openloop(float current, float rpm) {
 void mcpwm_foc_set_openloop_phase(float current, float phase) {
 	if (fabsf(current) < m_conf->cc_min_current) {
 		m_control_mode = CONTROL_MODE_NONE;
-		m_state = MC_STATE_OFF;
+		mcpwm_foc_set_state(MC_STATE_OFF, false);
 		stop_pwm_hw();
 		return;
 	}
@@ -767,7 +772,7 @@ void mcpwm_foc_set_openloop_phase(float current, float phase) {
 	utils_norm_angle_rad((float*)&m_openloop_phase);
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -799,7 +804,7 @@ void mcpwm_foc_set_openloop_duty(float dutyCycle, float rpm) {
 	m_openloop_speed = rpm * ((2.0 * M_PI) / 60.0);
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -819,7 +824,7 @@ void mcpwm_foc_set_openloop_duty_phase(float dutyCycle, float phase) {
 	utils_norm_angle_rad((float*)&m_openloop_phase);
 
 	if (m_state != MC_STATE_RUNNING) {
-		m_state = MC_STATE_RUNNING;
+		mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 	}
 }
 
@@ -1167,7 +1172,7 @@ void mcpwm_foc_encoder_detect(float current, bool print, float *offset, float *r
 	m_id_set = current;
 	m_iq_set = 0.0;
 	m_control_mode = CONTROL_MODE_CURRENT;
-	m_state = MC_STATE_RUNNING;
+	mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 
 	// Disable timeout
 	systime_t tout = timeout_get_timeout_msec();
@@ -1362,7 +1367,7 @@ void mcpwm_foc_encoder_detect(float current, bool print, float *offset, float *r
 	m_iq_set = 0.0;
 	m_phase_override = false;
 	m_control_mode = CONTROL_MODE_NONE;
-	m_state = MC_STATE_OFF;
+	mcpwm_foc_set_state(MC_STATE_OFF, false);
 	stop_pwm_hw();
 
 	// Restore configuration
@@ -1397,7 +1402,7 @@ float mcpwm_foc_measure_resistance(float current, int samples) {
 	m_id_set = 0.0;
 	m_iq_set = current;
 	m_control_mode = CONTROL_MODE_CURRENT;
-	m_state = MC_STATE_RUNNING;
+	mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 
 	// Disable timeout
 	systime_t tout = timeout_get_timeout_msec();
@@ -1427,7 +1432,7 @@ float mcpwm_foc_measure_resistance(float current, int samples) {
 			m_iq_set = 0.0;
 			m_phase_override = false;
 			m_control_mode = CONTROL_MODE_NONE;
-			m_state = MC_STATE_OFF;
+			mcpwm_foc_set_state(MC_STATE_OFF, false);
 			stop_pwm_hw();
 
 			timeout_configure(tout, tout_c);
@@ -1445,7 +1450,7 @@ float mcpwm_foc_measure_resistance(float current, int samples) {
 	m_iq_set = 0.0;
 	m_phase_override = false;
 	m_control_mode = CONTROL_MODE_NONE;
-	m_state = MC_STATE_OFF;
+	mcpwm_foc_set_state(MC_STATE_OFF, false);
 	stop_pwm_hw();
 
 	// Enable timeout
@@ -1482,7 +1487,7 @@ float mcpwm_foc_measure_inductance(float duty, int samples, float *curr, float *
 
 	mc_interface_lock();
 	m_control_mode = CONTROL_MODE_NONE;
-	m_state = MC_STATE_OFF;
+	mcpwm_foc_set_state(MC_STATE_OFF, false);
 	stop_pwm_hw();
 
 	m_conf->foc_sensor_mode = FOC_SENSOR_MODE_HFI;
@@ -1689,7 +1694,7 @@ bool mcpwm_foc_hall_detect(float current, uint8_t *hall_table) {
 	m_id_set = current;
 	m_iq_set = 0.0;
 	m_control_mode = CONTROL_MODE_CURRENT;
-	m_state = MC_STATE_RUNNING;
+	mcpwm_foc_set_state(MC_STATE_RUNNING, false);
 
 	// Disable timeout
 	systime_t tout = timeout_get_timeout_msec();
@@ -1742,7 +1747,7 @@ bool mcpwm_foc_hall_detect(float current, uint8_t *hall_table) {
 	m_iq_set = 0.0;
 	m_phase_override = false;
 	m_control_mode = CONTROL_MODE_NONE;
-	m_state = MC_STATE_OFF;
+	mcpwm_foc_set_state(MC_STATE_OFF, false);
 	stop_pwm_hw();
 
 	// Enable timeout
