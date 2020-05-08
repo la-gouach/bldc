@@ -42,7 +42,15 @@ static THD_WORKING_AREA(pedelec_thread_wa, 2048);
 // Private variables
 static volatile bool stop_now = true;
 static volatile bool is_running = false;
+static volatile float rot_speed = 0;
+static volatile bool prev_state = 1;
+static volatile time_t prev_tick_time = 0;
 
+// function called when the pedelec triggers the PFS
+static void set_speed() {
+  rot_speed = 2 * 3.14  / (12 * ST2MS(chVTGetSystemTime() - prev_tick_time));
+  prev_tick_time = chVTGetSystemTime();
+}
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
 void app_pedelec_start(void) {
@@ -90,12 +98,17 @@ static THD_FUNCTION(pedelec_thread, arg) {
 		}
 
 		timeout_reset(); // Reset timeout if everything is OK.
+    bool current_state = palReadPad(GPIOB, 5);
+    if(current_state != prev_state && prev_state == false){
+      set_speed();
+      prev_state = current_state;
+    }
 
 		commands_plot_set_graph(0);
-		commands_send_plot_points(sample, palReadPad(GPIOB, 5));
-		commands_plot_set_graph(1);
-		commands_send_plot_points(sample, palReadPad(GPIOC, 8));
+		commands_send_plot_points(sample, rot_speed);
+		// commands_plot_set_graph(1);
+		// commands_send_plot_points(sample, palReadPad(GPIOC, 8));
 		++sample;
-		chThdSleepMilliseconds(100);
+		chThdSleepMilliseconds(10);
 	}
 }
