@@ -35,6 +35,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define PEDELEC_STOP_TIMEOUT 500
+
 // Threads
 static THD_FUNCTION(pedelec_thread, arg);
 static THD_WORKING_AREA(pedelec_thread_wa, 2048);
@@ -44,12 +46,14 @@ static volatile bool stop_now = true;
 static volatile bool is_running = false;
 static volatile float rot_speed = 0;
 static volatile bool prev_state = 1;
-static volatile time_t prev_tick_time = 0;
+static volatile time_t prev_magnet_time = 0;
 
 // function called when the pedelec triggers the PFS
-static void set_speed() {
-  rot_speed = 2 * 3.14  / (12 * ST2MS(chVTGetSystemTime() - prev_tick_time));
-  prev_tick_time = chVTGetSystemTime();
+static void set_speed(time_t now) {
+  rot_speed = 2 * 3.14  / (12 * (now - prev_magnet_time));
+}
+static void reset_speed() {
+  rot_speed = 0;
 }
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
@@ -99,16 +103,21 @@ static THD_FUNCTION(pedelec_thread, arg) {
 
 		timeout_reset(); // Reset timeout if everything is OK.
     bool current_state = palReadPad(GPIOB, 5);
-    if(current_state != prev_state && prev_state == false){
-      set_speed();
-      prev_state = current_state;
+		time_t magnet_time = ST2MS(chVTGetSystemTime());
+    if(current_state != prev_state && prev_state == true){
+      set_speed(magnet_time);
+			prev_magnet_time = magnet_time;
     }
+		if (magnet_time - prev_magnet_time >= PEDELEC_STOP_TIMEOUT) {
+			reset_speed();
+		}
+		prev_state = current_state;
 
 		commands_plot_set_graph(0);
 		commands_send_plot_points(sample, rot_speed);
 		// commands_plot_set_graph(1);
 		// commands_send_plot_points(sample, palReadPad(GPIOC, 8));
 		++sample;
-		chThdSleepMilliseconds(10);
+		chThdSleepMilliseconds(1);
 	}
 }
