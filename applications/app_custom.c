@@ -120,7 +120,8 @@ static THD_FUNCTION(pedelec_thread, arg) {
 		}
 		prev_state = current_state;
 
-		float pedelec_current = utils_map((float)rot_speed, 0.0, 0.02, 0.0, 1.0);
+		float pedelec_current = utils_map((float)rot_speed, 0.0, 0.012, 0.0, 1.0);
+		utils_truncate_number(&pedelec_current, 0.0, 1.0);
 
         float throttle_current = (float)ADC_Value[ADC_IND_EXT];
 		throttle_current /= 4095;
