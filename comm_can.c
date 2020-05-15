@@ -34,6 +34,7 @@
 #include "hw.h"
 #include "canard_driver.h"
 #include "encoder.h"
+#include "can_dict.h"
 
 // Settings
 #define RX_FRAMES_SIZE	100
@@ -123,6 +124,8 @@ void comm_can_init(void) {
 			cancom_status_thread, NULL);
 	chThdCreateStatic(cancom_process_thread_wa, sizeof(cancom_process_thread_wa), NORMALPRIO,
 			cancom_process_thread, NULL);
+
+	can_dict_init();
 #endif
 }
 
@@ -1073,6 +1076,29 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 						} else if (current_state == MC_STATE_LOCKED_OFF) {
 							commands_printf("Unlocking the motor\n");
 							mc_interface_set_state(MC_STATE_OFF, true);
+						}
+					break;
+
+					case CAN_PACKET_DICTIONARY_READ:
+						if (rxmsg.DLC >= 1) {
+							int dict_var_id = rxmsg.data8[0];
+							uint8_t response[8] = { dict_var_id };
+							int written_length = can_dict_handle_read_request(dict_var_id, &(response[1]), 7);
+							if (written_length > 0) {
+								comm_can_transmit_eid((CAN_PACKET_DICTIONARY_VALUE << 8) | app_get_configuration()->controller_id, response, written_length + 1);
+							}
+						}
+					break;
+
+					case CAN_PACKET_DICTIONARY_WRITE:
+						if (rxmsg.DLC >= 1) {
+							int dict_var_id = rxmsg.data8[0] & 0x7f;
+							bool requires_ack = (rxmsg.data8[0] & 0x80) != 0;
+							bool success = can_dict_handle_write_request(dict_var_id, &(rxmsg.data8[1]), rxmsg.DLC - 1);
+							if (requires_ack) {
+								uint8_t response[2] = { dict_var_id, success };
+								comm_can_transmit_eid((CAN_PACKET_DICTIONARY_ACK << 8) | app_get_configuration()->controller_id, response, 2);
+							}
 						}
 					break;
 

@@ -32,6 +32,7 @@
 #include "hw.h"
 #include "commands.h"
 #include "timeout.h"
+#include "can_dict.h"
 
 #include <math.h>
 #include <string.h>
@@ -62,10 +63,17 @@ void app_custom_configure(app_configuration *conf) {
     config = *conf;
 }
 
+void on_can_dict_write(can_dict_type type, can_dict_variable value) {
+	if (type == CAN_DICT_TEST) {
+		commands_printf("CAN DICT 'test' variable written with value %x\n", value.u32);
+	}
+}
+
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
 void app_custom_start(void) {
-
+	can_dict_add_variable(CAN_DICT_TEST, 4, true, true, 2000);
+	can_dict_on_write(CAN_DICT_TEST, on_can_dict_write);
   /* PB5 = PFS */
 	palSetPadMode(GPIOB, 5, PAL_MODE_INPUT_PULLUP);
   /* PC8 = CRUISE */
