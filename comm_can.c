@@ -1060,12 +1060,6 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 								encoder_ts5700n8501_get_raw_status(), 8);
 					} break;
 
-					case CAN_PACKET_SET_LIGHTS:
-						ind = 0;
-						bool lights_state = buffer_get_uint8(rxmsg.data8, &ind);
-						app_lights_set_state(lights_state);
-					break;
-
 					case CAN_PACKET_MOTOR_LOCK:
 						ind = 0;
 						bool motor_lock = buffer_get_uint8(rxmsg.data8, &ind);

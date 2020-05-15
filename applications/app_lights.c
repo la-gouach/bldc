@@ -30,6 +30,7 @@
 #include "hw.h"
 #include "commands.h"
 #include "timeout.h"
+#include "can_dict.h"
 
 #include <math.h>
 #include <string.h>
@@ -45,12 +46,13 @@ static void light_command(int argc, const char **argv);
 // Private variables
 static volatile bool stop_now = true;
 static volatile bool is_running = false;
-static volatile bool lights_on = false;
+static volatile bool *lights_on;
 
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
 void app_lights_start(void) {
-
+	can_dict_add_variable_int(CAN_DICT_LIGHTS, 1, 0, true, true, 1000);
+	lights_on = &(can_dict_get_variable(CAN_DICT_LIGHTS)->b);
   /* Configure GPIO pin : PC3 */
 	palSetPadMode(GPIOC, 3, PAL_MODE_OUTPUT_PUSHPULL);
 
@@ -93,7 +95,7 @@ static THD_FUNCTION(lights_thread, arg) {
 
 		timeout_reset(); // Reset timeout if everything is OK.
 
-    if (lights_on) {
+    if (*lights_on) {
       palWritePad(GPIOC, 3, 1);
     } else {
       palWritePad(GPIOC, 3, 0);
@@ -105,7 +107,7 @@ static THD_FUNCTION(lights_thread, arg) {
 
 void app_lights_set_state(bool state) {
 	commands_printf("Turning the lights %s\n", state ? "ON" : "OFF");
-	lights_on = state;
+	*lights_on = state;
 }
 
 // Callback function for the terminal command with arguments.

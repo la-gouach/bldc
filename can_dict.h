@@ -8,7 +8,7 @@
 
 typedef enum {
   CAN_DICT_NOTHING = 0,
-  CAN_DICT_TEST = 1
+  CAN_DICT_LIGHTS = 1
 } can_dict_type;
 
 typedef union {
@@ -22,6 +22,7 @@ typedef union {
   int8_t   i8;
   float    f;
   int8_t   bytes[6];
+  bool b;
 } can_dict_variable;
 
 typedef void (*can_dict_write_callback)(can_dict_type, can_dict_variable);
