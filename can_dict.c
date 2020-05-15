@@ -15,16 +15,25 @@ bool can_dict_init() {
   return true;
 }
 
-bool can_dict_add_variable(can_dict_type id, uint8_t length, bool readable, bool writable, int send_interval_ms) {
+bool can_dict_add_variable(can_dict_type id, uint8_t length, can_dict_variable default_value, bool readable, bool writable, int send_interval_ms) {
   if ((int8_t)id < 0 || (int)id >= CAN_DICT_VARIABLES) return false;
   if (length > sizeof(can_dict_variable)) return false;
   if (dictionary[(int)id].active) return false;
   dictionary[(int)id].length = length;
+  dictionary[(int)id].variable = default_value;
   dictionary[(int)id].readable = readable;
   dictionary[(int)id].writable = writable;
   dictionary[(int)id].active = true;
   dictionary[(int)id].send_interval_ms = send_interval_ms;
   return true;
+}
+bool can_dict_add_variable_int(can_dict_type id, uint8_t length, int64_t value, bool readable, bool writable, int send_interval_ms) {
+  can_dict_variable v = {.i64 = value};
+  can_dict_add_variable(id, length, v, readable, writable, send_interval_ms);
+}
+bool can_dict_add_variable_float(can_dict_type id, float value, can_dict_variable default_value, bool readable, bool writable, int send_interval_ms) {
+  can_dict_variable v = {.f = value};
+  can_dict_add_variable(id, 4, v, readable, writable, send_interval_ms);
 }
 can_dict_variable *can_dict_get_variable(can_dict_type id) {
   if ((int8_t)id < 0 || (int)id >= CAN_DICT_VARIABLES) return 0;

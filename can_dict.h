@@ -40,7 +40,9 @@ typedef struct {
 } can_dict_variable_metadata;
 
 bool can_dict_init(void);
-bool can_dict_add_variable(can_dict_type id, uint8_t length, bool readable, bool writable, int send_interval_ms);
+bool can_dict_add_variable(can_dict_type id, uint8_t length, can_dict_variable default_value, bool readable, bool writable, int send_interval_ms);
+bool can_dict_add_variable_int(can_dict_type id, uint8_t length, int64_t value, bool readable, bool writable, int send_interval_ms);
+bool can_dict_add_variable_float(can_dict_type id, float value, can_dict_variable default_value, bool readable, bool writable, int send_interval_ms);
 can_dict_variable *can_dict_get_variable(can_dict_type id);
 bool can_dict_handle_write_request(can_dict_type id, uint8_t *payload, uint8_t payload_length);
 uint8_t can_dict_handle_read_request(can_dict_type id, uint8_t *result, uint8_t result_length);

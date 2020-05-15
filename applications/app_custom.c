@@ -72,7 +72,7 @@ void on_can_dict_write(can_dict_type type, can_dict_variable value) {
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
 void app_custom_start(void) {
-	can_dict_add_variable(CAN_DICT_TEST, 4, true, true, 2000);
+	can_dict_add_variable_int(CAN_DICT_TEST, 4, 0xBADF00D, true, true, 2000);
 	can_dict_on_write(CAN_DICT_TEST, on_can_dict_write);
   /* PB5 = PFS */
 	palSetPadMode(GPIOB, 5, PAL_MODE_INPUT_PULLUP);
