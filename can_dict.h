@@ -6,9 +6,14 @@
 #define CAN_DICT_MAX_WRITE_CALLBACKS 4
 #define CAN_DICT_VARIABLES 64
 
+#define CAN_DICT_NO_SEND_INTERVAL 0
+
 typedef enum {
   CAN_DICT_NOTHING = 0,
-  CAN_DICT_LIGHTS = 1
+  CAN_DICT_LIGHTS = 1,
+  CAN_DICT_PEDELEC_MAGNETS = 2,
+  CAN_DICT_PEDELEC_CURVE_ALPHA = 3,
+  CAN_DICT_PEDELEC_STOP_TIMEOUT = 4,
 } can_dict_type;
 
 typedef union {
@@ -22,7 +27,7 @@ typedef union {
   int8_t   i8;
   float    f;
   int8_t   bytes[6];
-  bool b;
+  bool     b;
 } can_dict_variable;
 
 typedef void (*can_dict_write_callback)(can_dict_type, can_dict_variable);
@@ -42,8 +47,8 @@ typedef struct {
 
 bool can_dict_init(void);
 bool can_dict_add_variable(can_dict_type id, uint8_t length, can_dict_variable default_value, bool readable, bool writable, int send_interval_ms);
-bool can_dict_add_variable_int(can_dict_type id, uint8_t length, int64_t value, bool readable, bool writable, int send_interval_ms);
-bool can_dict_add_variable_float(can_dict_type id, float value, can_dict_variable default_value, bool readable, bool writable, int send_interval_ms);
+bool can_dict_add_variable_int(can_dict_type id, uint8_t length, int64_t default_value, bool readable, bool writable, int send_interval_ms);
+bool can_dict_add_variable_float(can_dict_type id, float default_value, bool readable, bool writable, int send_interval_ms);
 can_dict_variable *can_dict_get_variable(can_dict_type id);
 bool can_dict_handle_write_request(can_dict_type id, uint8_t *payload, uint8_t payload_length);
 uint8_t can_dict_handle_read_request(can_dict_type id, uint8_t *result, uint8_t result_length);

@@ -51,7 +51,7 @@ static volatile bool *lights_on;
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
 void app_lights_start(void) {
-	can_dict_add_variable_int(CAN_DICT_LIGHTS, 1, 0, true, true, 1000);
+	can_dict_add_variable_int(CAN_DICT_LIGHTS, 1, 0, true, true, CAN_DICT_NO_SEND_INTERVAL);
 	lights_on = &(can_dict_get_variable(CAN_DICT_LIGHTS)->b);
   /* Configure GPIO pin : PC3 */
 	palSetPadMode(GPIOC, 3, PAL_MODE_OUTPUT_PUSHPULL);

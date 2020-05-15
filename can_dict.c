@@ -27,13 +27,13 @@ bool can_dict_add_variable(can_dict_type id, uint8_t length, can_dict_variable d
   dictionary[(int)id].send_interval_ms = send_interval_ms;
   return true;
 }
-bool can_dict_add_variable_int(can_dict_type id, uint8_t length, int64_t value, bool readable, bool writable, int send_interval_ms) {
-  can_dict_variable v = {.i64 = value};
-  can_dict_add_variable(id, length, v, readable, writable, send_interval_ms);
+bool can_dict_add_variable_int(can_dict_type id, uint8_t length, int64_t default_value, bool readable, bool writable, int send_interval_ms) {
+  can_dict_variable v = {.i64 = default_value};
+  return can_dict_add_variable(id, length, v, readable, writable, send_interval_ms);
 }
-bool can_dict_add_variable_float(can_dict_type id, float value, can_dict_variable default_value, bool readable, bool writable, int send_interval_ms) {
-  can_dict_variable v = {.f = value};
-  can_dict_add_variable(id, 4, v, readable, writable, send_interval_ms);
+bool can_dict_add_variable_float(can_dict_type id, float default_value, bool readable, bool writable, int send_interval_ms) {
+  can_dict_variable v = {.f = default_value};
+  return can_dict_add_variable(id, 4, v, readable, writable, send_interval_ms);
 }
 can_dict_variable *can_dict_get_variable(can_dict_type id) {
   if ((int8_t)id < 0 || (int)id >= CAN_DICT_VARIABLES) return 0;

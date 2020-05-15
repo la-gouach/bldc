@@ -32,6 +32,7 @@
 #include "hw.h"
 #include "commands.h"
 #include "timeout.h"
+#include "can_dict.h"
 
 #include <math.h>
 #include <string.h>
@@ -51,9 +52,13 @@ static volatile bool prev_state = 1;
 static volatile time_t prev_magnet_time = 0;
 static volatile app_configuration config;
 
+static volatile uint32_t *pedelec_nb_magnets;
+static volatile float    *pedelec_curve_alpha;
+static volatile uint32_t *pedelec_stop_timeout;
+
 // function called when the pedelec triggers the PFS
 static void set_speed(time_t now) {
-  rot_speed = 2 * 3.14  / (12 * (now - prev_magnet_time));
+  rot_speed = 2 * 3.14  / (*pedelec_nb_magnets * (now - prev_magnet_time));
 }
 static void reset_speed(void) {
   rot_speed = 0;
@@ -65,6 +70,14 @@ void app_custom_configure(app_configuration *conf) {
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
 void app_custom_start(void) {
+	can_dict_add_variable_int(CAN_DICT_PEDELEC_MAGNETS,      4,  12, true, true, CAN_DICT_NO_SEND_INTERVAL);
+	can_dict_add_variable_float(CAN_DICT_PEDELEC_CURVE_ALPHA,  1.0f, true, true, CAN_DICT_NO_SEND_INTERVAL);
+	can_dict_add_variable_int(CAN_DICT_PEDELEC_STOP_TIMEOUT, 4, 500, true, true, CAN_DICT_NO_SEND_INTERVAL);
+
+	pedelec_nb_magnets   = &(can_dict_get_variable(CAN_DICT_PEDELEC_MAGNETS)->u32);
+	pedelec_curve_alpha  = &(can_dict_get_variable(CAN_DICT_PEDELEC_CURVE_ALPHA)->f);
+	pedelec_stop_timeout = &(can_dict_get_variable(CAN_DICT_PEDELEC_STOP_TIMEOUT)->u32);
+
   /* PB5 = PFS */
 	palSetPadMode(GPIOB, 5, PAL_MODE_INPUT_PULLUP);
   /* PC8 = CRUISE */
@@ -114,25 +127,24 @@ static THD_FUNCTION(pedelec_thread, arg) {
       set_speed(magnet_time);
 			prev_magnet_time = magnet_time;
     }
-		if (magnet_time - prev_magnet_time >= PEDELEC_STOP_TIMEOUT) {
+		if (magnet_time - prev_magnet_time >= *pedelec_stop_timeout) {
 			reset_speed();
 		}
 		prev_state = current_state;
 
 		float pedelec_current = utils_map((float)rot_speed, 0.0, 0.012, 0.0, 1.0);
 		utils_truncate_number(&pedelec_current, 0.0, 1.0);
+		pedelec_current *= *pedelec_curve_alpha;
 
-        float throttle_current = (float)ADC_Value[ADC_IND_EXT];
+		float throttle_current = (float)ADC_Value[ADC_IND_EXT];
 		throttle_current /= 4095;
 		throttle_current *= V_REG;
-        throttle_current = utils_map(throttle_current, config.app_adc_conf.voltage_start, config.app_adc_conf.voltage_end, 0.0, 1.0);
+		throttle_current = utils_map(throttle_current, config.app_adc_conf.voltage_start, config.app_adc_conf.voltage_end, 0.0, 1.0);
 		utils_truncate_number(&throttle_current, 0.0, 1.0);
-        utils_deadband(&throttle_current, config.app_adc_conf.hyst, 1.0);
+		utils_deadband(&throttle_current, config.app_adc_conf.hyst, 1.0);
+		throttle_current = utils_throttle_curve(throttle_current, config.app_adc_conf.throttle_exp, config.app_adc_conf.throttle_exp_brake, config.app_adc_conf.throttle_exp_mode);
 
-
-        float current = pedelec_current >= throttle_current ? pedelec_current : throttle_current;
-        // The ADC throttle curve also impacts the pedelec
-		current = utils_throttle_curve(current, config.app_adc_conf.throttle_exp, config.app_adc_conf.throttle_exp_brake, config.app_adc_conf.throttle_exp_mode);
+		float current = pedelec_current >= throttle_current ? pedelec_current : throttle_current;
 		mc_interface_set_current_rel(current);
 
 		commands_plot_set_graph(0);
