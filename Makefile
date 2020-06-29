@@ -157,6 +157,7 @@ CSRC = $(STARTUPSRC) \
        i2c_bb.c \
        virtual_motor.c \
        shutdown.c \
+       can_dict.c \
        $(HWSRC) \
        $(APPSRC) \
        $(NRFSRC) \
@@ -218,15 +219,15 @@ MCU  = cortex-m4
 
 #TRGT = arm-elf-
 TRGT = arm-none-eabi-
-CC   = $(TRGT)gcc
+CC   = $(TRGT)gcc-7.3
 CPPC = $(TRGT)g++
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
-LD   = $(TRGT)gcc
+LD   = $(TRGT)gcc-7.3
 #LD   = $(TRGT)g++
 CP   = $(TRGT)objcopy
-AS   = $(TRGT)gcc -x assembler-with-cpp
+AS   = $(TRGT)gcc-7.3 -x assembler-with-cpp
 AR   = $(TRGT)ar
 OD   = $(TRGT)objdump
 SZ   = $(TRGT)size
