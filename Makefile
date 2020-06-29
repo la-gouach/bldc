@@ -157,6 +157,7 @@ CSRC = $(STARTUPSRC) \
        i2c_bb.c \
        virtual_motor.c \
        shutdown.c \
+       can_dict.c \
        $(HWSRC) \
        $(APPSRC) \
        $(NRFSRC) \
