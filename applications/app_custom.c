@@ -52,13 +52,14 @@ static volatile bool prev_state = 1;
 static volatile time_t prev_magnet_time = 0;
 static volatile app_configuration config;
 
-static volatile uint32_t *pedelec_nb_magnets;
-static volatile float    *pedelec_curve_alpha;
-static volatile uint32_t *pedelec_stop_timeout;
+static uint32_t pedelec_nb_magnets = 12;
+static float    pedelec_curve_alpha = 1.0f;
+static uint32_t pedelec_stop_timeout = 500;
 
 // function called when the pedelec triggers the PFS
 static void set_speed(time_t now) {
-  rot_speed = 2 * 3.14  / (*pedelec_nb_magnets * (now - prev_magnet_time));
+  // TODO: Low pass filter ?
+  rot_speed = 2 * 3.14  / (pedelec_nb_magnets * (now - prev_magnet_time));
 }
 static void reset_speed(void) {
   rot_speed = 0;
@@ -67,16 +68,12 @@ void app_custom_configure(app_configuration *conf) {
     config = *conf;
 }
 
-// Called when the custom application is started. Start our
-// threads here and set up callbacks.
+// Called when the custom application is started.
+// Start our threads here and set up callbacks.
 void app_custom_start(void) {
-	can_dict_add_variable_int(CAN_DICT_PEDELEC_MAGNETS,      4,  12, true, true, CAN_DICT_NO_SEND_INTERVAL);
-	can_dict_add_variable_float(CAN_DICT_PEDELEC_CURVE_ALPHA,  1.0f, true, true, CAN_DICT_NO_SEND_INTERVAL);
-	can_dict_add_variable_int(CAN_DICT_PEDELEC_STOP_TIMEOUT, 4, 500, true, true, CAN_DICT_NO_SEND_INTERVAL);
-
-	pedelec_nb_magnets   = &(can_dict_get_variable(CAN_DICT_PEDELEC_MAGNETS)->u32);
-	pedelec_curve_alpha  = &(can_dict_get_variable(CAN_DICT_PEDELEC_CURVE_ALPHA)->f);
-	pedelec_stop_timeout = &(can_dict_get_variable(CAN_DICT_PEDELEC_STOP_TIMEOUT)->u32);
+	can_dict_bind_variable(CAN_DICT_PEDELEC_MAGNETS,      (can_dict_variable *)&pedelec_nb_magnets, sizeof(pedelec_nb_magnets), true, true, CAN_DICT_NO_SEND_INTERVAL);
+	can_dict_bind_variable(CAN_DICT_PEDELEC_CURVE_ALPHA,  (can_dict_variable *)&pedelec_curve_alpha, sizeof(pedelec_curve_alpha), true, true, CAN_DICT_NO_SEND_INTERVAL);
+	can_dict_bind_variable(CAN_DICT_PEDELEC_STOP_TIMEOUT, (can_dict_variable *)&pedelec_stop_timeout, sizeof(pedelec_stop_timeout), true, true, CAN_DICT_NO_SEND_INTERVAL);
 
   /* PB5 = PFS */
 	palSetPadMode(GPIOB, 5, PAL_MODE_INPUT_PULLUP);
@@ -113,7 +110,7 @@ static THD_FUNCTION(pedelec_thread, arg) {
 
 	uint32_t sample = 0.0;
 
-	for(;;) {
+	for(int tick = 0;; ++tick) {
 		// Check if it is time to stop.
 		if (stop_now) {
 			is_running = false;
@@ -121,20 +118,21 @@ static THD_FUNCTION(pedelec_thread, arg) {
 		}
 
 		timeout_reset(); // Reset timeout if everything is OK.
-    bool current_state = palReadPad(GPIOB, 5);
+    	bool current_state = palReadPad(GPIOB, 5);
 		time_t magnet_time = ST2MS(chVTGetSystemTime());
-    if(current_state != prev_state && prev_state == true){
-      set_speed(magnet_time);
+    	if (current_state != prev_state && prev_state == true){
+      		set_speed(magnet_time);
 			prev_magnet_time = magnet_time;
-    }
-		if (magnet_time - prev_magnet_time >= *pedelec_stop_timeout) {
+	    }
+		// TODO: Have timeout depend on the current pedelec speed ?
+		if (magnet_time - prev_magnet_time >= pedelec_stop_timeout) {
 			reset_speed();
 		}
 		prev_state = current_state;
 
 		float pedelec_current = utils_map((float)rot_speed, 0.0, 0.012, 0.0, 1.0);
 		utils_truncate_number(&pedelec_current, 0.0, 1.0);
-		pedelec_current *= *pedelec_curve_alpha;
+		pedelec_current *= pedelec_curve_alpha;
 
 		float throttle_current = (float)ADC_Value[ADC_IND_EXT];
 		throttle_current /= 4095;
@@ -153,6 +151,9 @@ static THD_FUNCTION(pedelec_thread, arg) {
 		commands_send_plot_points(sample % 2000, 1);
 		++sample;
 
+		if (!(tick % 1000)) {
+			commands_printf("PEDELEC CONFIG: MAGNETS=%d, ALPHA=%f, TIMEOUT=%d\n", pedelec_nb_magnets, pedelec_curve_alpha, pedelec_stop_timeout);
+		}
 		chThdSleepMilliseconds(1);
 	}
 }

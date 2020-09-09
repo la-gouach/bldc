@@ -35,6 +35,7 @@
 #include "buffer.h"
 #include "gpdrive.h"
 #include "comm_can.h"
+#include "can_dict.h"
 #include "shutdown.h"
 #include "app.h"
 #include "utils.h"
@@ -158,6 +159,10 @@ void mc_interface_init(mc_configuration *configuration) {
 	// Start threads
 	chThdCreateStatic(timer_thread_wa, sizeof(timer_thread_wa), NORMALPRIO, timer_thread, NULL);
 	chThdCreateStatic(sample_send_thread_wa, sizeof(sample_send_thread_wa), NORMALPRIO - 1, sample_send_thread, NULL);
+
+	can_dict_bind_variable(CAN_DICT_MAX_POWER, (can_dict_variable *)&m_conf.l_watt_max, sizeof(m_conf.l_watt_max), true, true, CAN_DICT_NO_SEND_INTERVAL);
+	// can_dict_bind_variable(CAN_DICT_MAX_SPEED, (can_dict_variable *)&m_conf.l_max_erpm, sizeof(m_conf.l_max_erpm), true, true, CAN_DICT_NO_SEND_INTERVAL);
+	can_dict_bind_variable(CAN_DICT_WHEEL_DIAM, (can_dict_variable *)&m_conf.si_wheel_diameter, sizeof(m_conf.si_wheel_diameter), true, true, CAN_DICT_NO_SEND_INTERVAL);
 
 #ifdef HW_HAS_DRV8301
 	drv8301_set_oc_mode(configuration->m_drv8301_oc_mode);

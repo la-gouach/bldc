@@ -796,11 +796,11 @@ typedef enum {
 	CAN_PACKET_STATUS_5,
 	CAN_PACKET_POLL_TS5700N8501_STATUS,
 	// Gouach custom commands
-	CAN_PACKET_MOTOR_LOCK = 64,
-	CAN_PACKET_DICTIONARY_READ,
-	CAN_PACKET_DICTIONARY_VALUE, // command used by VESC to answer read requests
-	CAN_PACKET_DICTIONARY_WRITE,
-	CAN_PACKET_DICTIONARY_ACK // command optionally used by VESC to answer write requests
+	CAN_PACKET_MOTOR_LOCK       = 0x40,
+	CAN_PACKET_DICTIONARY_READ  = 0x41,
+	CAN_PACKET_DICTIONARY_VALUE = 0x42, // command used by VESC to answer read requests
+	CAN_PACKET_DICTIONARY_WRITE = 0x43,
+	CAN_PACKET_DICTIONARY_ACK   = 0x44  // command optionally used by VESC to answer write requests
 } CAN_PACKET_ID;
 
 // Logged fault data
