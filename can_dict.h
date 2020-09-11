@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define CAN_DICT_MAX_WRITE_CALLBACKS 4
-#define CAN_DICT_VARIABLES 64
+#define CAN_DICT_VARIABLES 256
 
 #define CAN_DICT_NO_SEND_INTERVAL 0
 
@@ -25,6 +25,7 @@ typedef enum {
   // REAL TIME INFO
   CAN_DICT_POWER = 0x80, // In watts
   CAN_DICT_SPEED = 0x81, // In km/h
+  CAN_DICT_DISTANCE = 0x82, // In km
 } can_dict_type;
 
 typedef union {
@@ -54,8 +55,8 @@ typedef struct {
   bool                     writable;
   can_dict_setter          setter;
   can_dict_getter          getter;
-  uint32_t                 send_interval_ms; // If set to a positive value, the value of the variable will be sent on the CAN bus every send_interval_ms milliseconds
-  uint32_t                _last_value_send_ms;
+  int32_t                 send_interval_ms; // If set to a positive value, the value of the variable will be sent on the CAN bus every send_interval_ms milliseconds
+  int32_t                 _last_value_send_ms;
 } can_dict_variable_metadata;
 
 

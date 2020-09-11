@@ -161,7 +161,6 @@ void mc_interface_init(mc_configuration *configuration) {
 	chThdCreateStatic(sample_send_thread_wa, sizeof(sample_send_thread_wa), NORMALPRIO - 1, sample_send_thread, NULL);
 
 	can_dict_bind_variable(CAN_DICT_MAX_POWER, (can_dict_variable *)&m_conf.l_watt_max, sizeof(m_conf.l_watt_max), true, true, CAN_DICT_NO_SEND_INTERVAL);
-	// can_dict_bind_variable(CAN_DICT_MAX_SPEED, (can_dict_variable *)&m_conf.l_max_erpm, sizeof(m_conf.l_max_erpm), true, true, CAN_DICT_NO_SEND_INTERVAL);
 	can_dict_bind_variable(CAN_DICT_WHEEL_DIAM, (can_dict_variable *)&m_conf.si_wheel_diameter, sizeof(m_conf.si_wheel_diameter), true, true, CAN_DICT_NO_SEND_INTERVAL);
 
 #ifdef HW_HAS_DRV8301
@@ -1362,6 +1361,10 @@ setup_values mc_interface_get_setup_values(void) {
 	}
 
 	return val;
+}
+
+float mc_interface_get_power(void) {
+	return mc_interface_get_tot_current_in_filtered() * GET_INPUT_VOLTAGE();
 }
 
 // MC implementation functions

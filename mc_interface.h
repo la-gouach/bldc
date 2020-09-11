@@ -81,6 +81,7 @@ float mc_interface_get_battery_level(float *wh_left);
 float mc_interface_get_speed(void);
 float mc_interface_get_distance(void);
 float mc_interface_get_distance_abs(void);
+float mc_interface_get_power(void);
 setup_values mc_interface_get_setup_values(void);
 
 // MC implementation functions
